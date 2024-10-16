@@ -8,9 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using mf_dev_backend.Models;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
 namespace mf_dev_backend.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class UsuariosController : Controller
     {
         private readonly AppDbContext _context;
@@ -26,12 +28,20 @@ namespace mf_dev_backend.Controllers
             return View(await _context.Usuários.ToListAsync());
         }
 
+        [AllowAnonymous]
+        public IActionResult AccessDenied() 
+        { 
+            return View();
+        }
+
+        [AllowAnonymous]
         public IActionResult Login()
         {
             return View();
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(Usuario usuario)
         {
             var dados = await _context.Usuários.
@@ -66,7 +76,7 @@ namespace mf_dev_backend.Controllers
 
                 await HttpContext.SignInAsync(principal, props);
 
-                Redirect("/");
+                return Redirect("/");
             }
             else
             {
@@ -74,6 +84,14 @@ namespace mf_dev_backend.Controllers
             }
 
             return View();
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync();
+
+            return RedirectToAction("Login", "Usuarios");
         }
 
         // GET: Usuarios/Details/5
